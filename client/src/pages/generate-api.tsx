@@ -1,0 +1,396 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertProjectSchema, type InsertProject } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { GripVertical, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+
+const SERVICE_TYPES = [
+  "Customer Support",
+  "Sales",
+  "Product Information",
+  "Technical Support",
+];
+
+const SAMPLE_DOCS = {
+  companyInfo: "/samples/company-info.pdf",
+  faq: "/samples/faq.pdf",
+  products: "/samples/products.pdf",
+};
+
+type State = {
+  name: string;
+  specification: string;
+};
+
+export default function GenerateApi() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [files, setFiles] = useState<{
+    companyInfo?: File;
+    faq?: File;
+    products?: File;
+  }>({});
+  const [states, setStates] = useState<State[]>([]);
+
+  const form = useForm<InsertProject>({
+    resolver: zodResolver(insertProjectSchema),
+    defaultValues: {
+      name: "",
+      botName: "",
+      serviceType: "",
+      states: [],
+    },
+  });
+
+  const createProject = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        body: formData, // Use the FormData directly
+      });
+
+      console.log(formData);
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      if (!res.ok) {
+        // Handle error responses
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create project");
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      toast({
+        title: "Success",
+        description: "API key generated successfully",
+      });
+      setLocation("/dashboard");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addState = () => {
+    setStates([...states, { name: "", specification: "" }]);
+  };
+
+  const removeState = (index: number) => {
+    setStates(states.filter((_, i) => i !== index));
+  };
+
+  const updateState = (index: number, field: keyof State, value: string) => {
+    const newStates = [...states];
+    newStates[index] = { ...newStates[index], [field]: value };
+    setStates(newStates);
+  };
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(states);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setStates(items);
+  };
+
+  const handleSubmit = form.handleSubmit((data) => {
+    const formData = new FormData();
+    
+    // Instead of sending the entire JSON data in one field,
+    // append each field individually
+    formData.append("name", data.name);
+    formData.append("botName", data.botName);
+    formData.append("serviceType", data.serviceType);
+    
+    // Append states data as a JSON string
+    formData.append("statesData", JSON.stringify(states));
+    
+    // Only append files if they exist
+    if (files.companyInfo) formData.append("companyInfo", files.companyInfo);
+    if (files.faq) formData.append("faq", files.faq);
+    if (files.products) formData.append("products", files.products);
+    
+    createProject.mutate(formData);
+  });
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Card>
+        <CardHeader>
+          <CardTitle>Generate New API Key</CardTitle>
+          <CardDescription>
+            Configure your chatbot and generate an API key
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="botName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bot Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="serviceType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a service type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SERVICE_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-2">Document Uploads</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {Object.entries(SAMPLE_DOCS).map(([key, url]) => (
+                      <a
+                        key={key}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Download {key} sample
+                      </a>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <FormItem>
+                      <FormLabel>Company Information</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) =>
+                            setFiles((prev) => ({
+                              ...prev,
+                              companyInfo: e.target.files?.[0],
+                            }))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+
+                    <FormItem>
+                      <FormLabel>FAQ Document</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) =>
+                            setFiles((prev) => ({
+                              ...prev,
+                              faq: e.target.files?.[0],
+                            }))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+
+                    <FormItem>
+                      <FormLabel>Products Document</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) =>
+                            setFiles((prev) => ({
+                              ...prev,
+                              products: e.target.files?.[0],
+                            }))
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-medium">Bot States</h3>
+                    <Button type="button" onClick={addState} variant="outline">
+                      Add State
+                    </Button>
+                  </div>
+
+                  <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="states">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-4"
+                        >
+                          {states.map((state, index) => (
+                            <Draggable
+                              key={index}
+                              draggableId={`state-${index}`}
+                              index={index}
+                            >
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className="bg-muted p-4 rounded-lg"
+                                >
+                                  <div className="flex items-start gap-4">
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="mt-2"
+                                    >
+                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1 space-y-4">
+                                      <FormItem>
+                                        <FormLabel>State Name</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            value={state.name}
+                                            onChange={(e) =>
+                                              updateState(
+                                                index,
+                                                "name",
+                                                e.target.value
+                                              )
+                                            }
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                      <FormItem>
+                                        <FormLabel>Specification</FormLabel>
+                                        <FormControl>
+                                          <Textarea
+                                            value={state.specification}
+                                            onChange={(e) =>
+                                              updateState(
+                                                index,
+                                                "specification",
+                                                e.target.value
+                                              )
+                                            }
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeState(index)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={createProject.isPending}
+              >
+                Generate API Key
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
