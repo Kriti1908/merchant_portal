@@ -259,6 +259,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat history endpoint
+  app.get("/api/chat/history", async (req, res) => {
+    const { apiKey } = req.query;
+    if (!apiKey) {
+      return res.status(400).json({ message: "API key is required" });
+    }
+
+    try {
+      const project = await Project.findOne({ apiKey });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Here you would typically fetch chat history from your database
+      // For now, returning empty array
+      res.json([]);
+    } catch (err) {
+      res.status(500).json({ message: "Error fetching chat history" });
+    }
+  });
+
+  // Chat message endpoint
+  app.post("/api/chat", async (req, res) => {
+    const { message, apiKey } = req.body;
+    
+    if (!message || !apiKey) {
+      return res.status(400).json({ message: "Message and API key are required" });
+    }
+
+    try {
+      const project = await Project.findOne({ apiKey });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Here you would make the call to your Java OpenAI bot service
+      // Replace this URL with your actual bot service URL
+      const botResponse = await fetch("YOUR_JAVA_BOT_SERVICE_URL", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          projectId: project._id,
+        }),
+      });
+
+      if (!botResponse.ok) {
+        throw new Error("Failed to get bot response");
+      }
+
+      const response = await botResponse.json();
+      res.json({ message: response.message });
+    } catch (err) {
+      res.status(500).json({ message: "Error processing message" });
+    }
+  });
+
+  app.post("/api/test-chat", async (req, res) => {
+    const { message, apiKey } = req.body;
+    
+    if (!message || !apiKey) {
+      return res.status(400).json({ message: "Message and API key are required" });
+    }
+
+    // Sample response
+    res.json({ 
+      message: "I am a sample bot, I cannot think, DONT BOTHER ME!!!" 
+    });
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 

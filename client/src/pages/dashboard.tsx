@@ -144,12 +144,29 @@ export default function Dashboard() {
                       {new Date(project.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+                  <Button
+                    className="w-full mt-4"
+                    onClick={() => {
+                      const chatUrl = `/chat?name=${encodeURIComponent(project.botName)}&key=${encodeURIComponent(project.apiKey)}`;
+                      window.open(chatUrl, '_blank');
+                    }}
+                  >
+                    Chat with Bot!
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+      <div className="flex justify-between items-center mt-4">
+        <Link href="/test-bot-chat">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Test Bot Chat
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

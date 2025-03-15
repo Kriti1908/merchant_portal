@@ -11,6 +11,8 @@ import Dashboard from "@/pages/dashboard";
 import GenerateApi from "@/pages/generate-api";
 import NotFound from "@/pages/not-found";
 import { ProtectedRoute } from "./lib/protected-route";
+import Chat from "./pages/chat";
+import TestBotChat from "./pages/test-bot-chat";
 
 function Router() {
   return (
@@ -19,6 +21,8 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/generate-api" component={GenerateApi} />
+      <ProtectedRoute path="/chat" component={Chat} />
+      <ProtectedRoute path="/test-bot-chat" component={TestBotChat} />
       <Route component={NotFound} />
     </Switch>
   );

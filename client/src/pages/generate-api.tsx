@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProjectSchema, type InsertProject } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { GripVertical, X, PlusCircle } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -30,9 +32,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { GripVertical, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 const SERVICE_TYPES = [
   "Customer Support",
@@ -108,6 +109,16 @@ export default function GenerateApi() {
       });
     },
   });
+
+  useEffect(() => {
+    // Set initial states
+    setStates([
+      { name: "Introduction", specification: "Greet user and introduce chatbot capabilities" },
+      { name: "Education", specification: "Provide information about products/services" },
+      { name: "Recommendation", specification: "Suggest products/services based on user needs" },
+      { name: "Closing", specification: "Thank user and provide next steps" }
+    ]);
+  }, []);
 
   const addState = () => {
     setStates([...states, { name: "", specification: "" }]);
@@ -300,83 +311,119 @@ export default function GenerateApi() {
                     </Button>
                   </div>
 
-                  <DragDropContext onDragEnd={onDragEnd}>
-                    <Droppable droppableId="states">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="space-y-4"
-                        >
-                          {states.map((state, index) => (
-                            <Draggable
-                              key={index}
-                              draggableId={`state-${index}`}
-                              index={index}
-                            >
-                              {(provided) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className="bg-muted p-4 rounded-lg"
-                                >
-                                  <div className="flex items-start gap-4">
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="mt-2"
-                                    >
-                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                  <div className="space-y-6">
+                    <p className="text-sm text-muted-foreground">
+                      Drag and drop states to define your chatbot's conversation flow. The states will be processed in the order shown.
+                    </p>
+
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="states">
+                        {(provided) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className="space-y-4 relative"
+                          >
+                            {states.map((state, index) => (
+                              <Draggable
+                                key={index}
+                                draggableId={`state-${index}`}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`bg-muted p-4 rounded-lg border-2 ${
+                                      snapshot.isDragging 
+                                        ? "border-primary shadow-lg" 
+                                        : "border-transparent"
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-4">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <div
+                                          {...provided.dragHandleProps}
+                                          className="bg-muted-foreground/10 hover:bg-muted-foreground/20 p-2 rounded-lg cursor-grab active:cursor-grabbing"
+                                        >
+                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                        <Badge variant="outline" className="rounded-full w-6 h-6 flex items-center justify-center p-0">
+                                          {index + 1}
+                                        </Badge>
+                                      </div>
+                                      
+                                      <div className="flex-1 space-y-4">
+                                        <FormItem>
+                                          <FormLabel>State Name</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              value={state.name}
+                                              onChange={(e) =>
+                                                updateState(
+                                                  index,
+                                                  "name",
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Enter state name"
+                                            />
+                                          </FormControl>
+                                        </FormItem>
+                                        <FormItem>
+                                          <FormLabel>Specification</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              value={state.specification}
+                                              onChange={(e) =>
+                                                updateState(
+                                                  index,
+                                                  "specification",
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Describe what happens in this state"
+                                              rows={3}
+                                            />
+                                          </FormControl>
+                                        </FormItem>
+                                      </div>
+                                      
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeState(index)}
+                                        className="text-muted-foreground hover:text-destructive"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
                                     </div>
-                                    <div className="flex-1 space-y-4">
-                                      <FormItem>
-                                        <FormLabel>State Name</FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            value={state.name}
-                                            onChange={(e) =>
-                                              updateState(
-                                                index,
-                                                "name",
-                                                e.target.value
-                                              )
-                                            }
-                                          />
-                                        </FormControl>
-                                      </FormItem>
-                                      <FormItem>
-                                        <FormLabel>Specification</FormLabel>
-                                        <FormControl>
-                                          <Textarea
-                                            value={state.specification}
-                                            onChange={(e) =>
-                                              updateState(
-                                                index,
-                                                "specification",
-                                                e.target.value
-                                              )
-                                            }
-                                          />
-                                        </FormControl>
-                                      </FormItem>
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => removeState(index)}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
                                   </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            
+                            {states.length === 0 && (
+                              <div className="bg-muted/50 p-8 rounded-lg border border-dashed border-muted-foreground/20 flex flex-col items-center justify-center">
+                                <p className="text-muted-foreground mb-4">No states defined. Add your first state to begin.</p>
+                                <Button 
+                                  type="button" 
+                                  onClick={addState} 
+                                  variant="outline"
+                                  className="flex items-center gap-2"
+                                >
+                                  <PlusCircle className="h-4 w-4" />
+                                  Add State
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  </div>
                 </div>
               </div>
 
