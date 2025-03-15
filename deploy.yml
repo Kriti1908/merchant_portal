@@ -26,6 +26,10 @@ jobs:
         run: |
           npm run build
 
+      - name: Copy Frontend Build to Backend Public Directory
+        run: |
+          cp -r dist/* server/public/
+
       - name: Build Backend
         run: |
           npm run build
