@@ -1,4 +1,5 @@
-name: Deploy REST Express App to Local Runner
+
+name: Deploy REST Express App
 
 on:
   push:
@@ -19,21 +20,15 @@ jobs:
           node-version: '18'
       
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
       
       - name: Build Frontend
+        run: npm run build
+      
+      - name: Copy Frontend Build
         run: |
-          npm run build
-
-      - name: Copy Frontend Build to Backend Public Directory
-        run: |
+          mkdir -p server/public
           cp -r dist/* server/public/
-
-      - name: Build Backend
-        run: |
-          npm run build
-
-      - name: Deploy Backend
-        run: |
-          npm start
+      
+      - name: Start Server
+        run: npm start
