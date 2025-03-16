@@ -19,6 +19,7 @@ export default function Dashboard() {
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
     onError: (error) => {
+      console.error("Project loading error:", error);
       toast({
         title: "Error loading projects",
         description: error instanceof Error ? error.message : "Failed to load projects",

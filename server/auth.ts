@@ -62,14 +62,24 @@ export function setupAuth(app: Express) {
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours,
+      sameSite: "lax",
+      httpOnly: true
     }
   };
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Add this before your routes
+app.use((req, res, next) => {
+  console.log('Session ID:', req.sessionID);
+  console.log('Is Authenticated:', req.isAuthenticated());
+  console.log('Session:', req.session);
+  next();
+});
 
   passport.use(new LocalStrategy(
     { usernameField: 'email' },

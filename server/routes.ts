@@ -61,6 +61,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      console.log('Request params:', req.params);
+      console.log('Request user:', req.user);
+      
       const projects = await Project.find({ userId: req.user._id })
         .sort({ createdAt: -1 });
       res.json(projects);
