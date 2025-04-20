@@ -13,6 +13,8 @@ import NotFound from "@/pages/not-found";
 import { ProtectedRoute } from "./lib/protected-route";
 import Chat from "./pages/chat";
 import TestBotChat from "./pages/test-bot-chat";
+import ChoosePlan from "./pages/choose-plan";
+import ConfirmPayment from "./pages/confirm-payment";
 
 function Router() {
   return (
@@ -23,6 +25,8 @@ function Router() {
       <ProtectedRoute path="/generate-api" component={GenerateApi} />
       <ProtectedRoute path="/chat" component={Chat} />
       <ProtectedRoute path="/test-bot-chat" component={TestBotChat} />
+      <ProtectedRoute path="/choose-plan" component={ChoosePlan} />
+      <ProtectedRoute path="/confirm-payment" component={ConfirmPayment} />
       <Route component={NotFound} />
     </Switch>
   );

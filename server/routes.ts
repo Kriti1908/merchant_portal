@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
+import { setupPaymentRoutes } from "./payment-routes"; // Import the payment routes
 import { Project } from "./models/Project";
+import { Review } from "./models/Reviews";
 import multer from "multer";
 import crypto from "crypto";
 import { insertProjectSchema } from "@shared/schema";
@@ -30,7 +32,7 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['.pdf', '.doc', '.docx'];
+    const allowedTypes = ['.pdf', '.doc', '.docx', '.csv'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
       cb(null, true);
@@ -47,6 +49,9 @@ function generateApiKey() {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Setup payment routes
+  setupPaymentRoutes(app);
 
   // Middleware to parse JSON bodies
   app.use(express.json());
@@ -97,64 +102,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new project with API key
   // Apply multer middleware only for file fields
   app.post("/api/projects", (req, res) => {
+    // Check if the request is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+  
     const fileUpload = upload.fields([
-      { name: 'companyInfo', maxCount: 1 },
-      { name: 'faq', maxCount: 1 },
-      { name: 'products', maxCount: 1 }
+      { name: "companyInfo", maxCount: 1 },
+      { name: "faq", maxCount: 1 },
+      { name: "products", maxCount: 1 },
     ]);
   
     fileUpload(req, res, async (err) => {
       if (err) {
-        console.error('Multer error:', err);
+        console.error("Multer error:", err);
         return res.status(400).json({ message: err.message });
       }
-      
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
+  
       try {
-        console.log('Request body:', req.body);
-        
+        console.log("Request body:", req.body);
+  
         // Get form fields directly
-        const { name, botName, serviceType, statesData } = req.body;
-        const states = JSON.parse(statesData || '[]');
+        const { 
+          name, 
+          botName, 
+          serviceType, 
+          statesData, 
+          plan_type, 
+          total_api_calls,
+          payment_id,
+          order_id,
+          billingCycle
+        } = req.body;
         
+        const states = JSON.parse(statesData || "[]");
+  
+        // Convert total_api_calls to a number
         const validatedData = insertProjectSchema.parse({
           name,
           botName,
           serviceType,
-          states
+          states,
+          plan_type,
+          total_api_calls: Number(total_api_calls), // Ensure this is a number
         });
-        
+  
         // Process files as before
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         const documents = [];
-        
+  
         for (const [type, fileArray] of Object.entries(files)) {
           const file = fileArray[0];
           documents.push({
             originalName: file.originalname,
             fileName: file.filename,
             path: file.path,
-            type: type
+            type: type,
           });
         }
-        
+  
         const projectData = {
           ...validatedData,
           userId: req.user._id,
           apiKey: generateApiKey(),
           documents,
-          states: validatedData.states || []
+          states: validatedData.states || [],
+          payment: {
+            paymentId: payment_id,
+            orderId: order_id,
+            status: "completed",
+            date: new Date(),
+          },
+          plan_expiry: billingCycle === "monthly" 
+            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 1 month
+            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+          isActive: true, // Set active on creation
         };
-        
+  
         const project = await Project.create(projectData);
         res.status(201).json(project);
       } catch (err) {
-        console.error('Error creating project:', err);
-        res.status(400).json({ 
-          message: err instanceof Error ? err.message : "Invalid request" 
+        console.error("Error creating project:", err);
+        res.status(400).json({
+          message: err instanceof Error ? err.message : "Invalid request",
         });
       }
     });
@@ -227,6 +257,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(project);
     } catch (err) {
       res.status(400).json({ message: err instanceof Error ? err.message : "Invalid request" });
+    }
+  });
+
+  // Reactivate project and update plan expiry
+  app.patch("/api/projects/:id/reactivate", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+  
+    try {
+      const { id } = req.params;
+      const { billingCycle, payment_id, order_id } = req.body;
+  
+      const project = await Project.findOne({
+        _id: id,
+        userId: req.user._id,
+      });
+  
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+  
+      // Update plan expiry and set project to active
+      project.plan_expiry = billingCycle === "monthly"
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 1 month
+        : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+      project.isActive = true;
+  
+      // Update payment details
+      project.payment = {
+        paymentId: payment_id,
+        orderId: order_id,
+        status: "completed",
+        date: new Date(),
+      };
+  
+      await project.save();
+      res.json(project);
+    } catch (err) {
+      console.error("Error reactivating project:", err);
+      res.status(500).json({ message: "Error reactivating project" });
     }
   });
 
@@ -333,6 +404,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: "I am a sample bot, I cannot think, DONT BOTHER ME!!!" 
     });
   });
+
+  // Get all reviews
+app.get("/api/reviews", async (req, res) => {
+
+  try {
+    // Get all reviews with user information
+    const reviews = await Review.find()
+      .sort({ createdAt: -1 })
+      .populate('userId', 'username email'); // Populate user information
+    
+    res.json(reviews);
+  } catch (err) {
+    console.error("Error fetching reviews:", err);
+    res.status(500).json({ message: "Error fetching reviews" });
+  }
+});
+
+// Get reviews for a specific project
+app.get("/api/projects/:projectId/reviews", async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    // Find all reviews for the specified project
+    const reviews = await Review.find({ projectId })
+      .sort({ createdAt: -1 })
+      .populate('userId', 'username email');
+    
+    res.json(reviews);
+  } catch (err) {
+    console.error("Error fetching project reviews:", err);
+    res.status(500).json({ message: "Error fetching project reviews" });
+  }
+});
+
+// Update the POST review route to handle the projectId validation issue
+app.post("/api/reviews", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  try {
+    const { rating, comment, projectId } = req.body;
+    
+    // Validate required fields
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+    
+    if (!comment || comment.trim() === '') {
+      return res.status(400).json({ message: "Comment is required" });
+    }
+
+    // Check if projectId exists
+    if (projectId) {
+      // If projectId is provided, verify it exists
+      const projectExists = await Project.findById(projectId);
+      if (!projectExists) {
+        return res.status(400).json({ message: "Selected project does not exist" });
+      }
+    }
+
+    // Create a new review with the user ID from the session
+    const review = new Review({
+      userId: req.user._id,
+      projectId: projectId || null, // Make projectId optional by providing null as default
+      rating,
+      comment,
+      createdAt: new Date()
+    });
+
+    await review.save();
+    res.status(201).json(review);
+  } catch (err) {
+    console.error("Error creating review:", err);
+    res.status(500).json({ message: "Error creating review" });
+  }
+});
+
+// Delete a review (only the review creator or admin can delete)
+app.delete("/api/reviews/:id", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  try {
+    const { id } = req.params;
+    
+    // Find the review
+    const review = await Review.findById(id);
+    
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+    
+    // Check if the current user is the review creator
+    if (review.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized to delete this review" });
+    }
+    
+    // Delete the review
+    await Review.findByIdAndDelete(id);
+    res.status(204).send();
+  } catch (err) {
+    console.error("Error deleting review:", err);
+    res.status(500).json({ message: "Error deleting review" });
+  }
+});
 
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

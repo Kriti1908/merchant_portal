@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Bot, 
   MessageSquare, 
@@ -11,93 +12,91 @@ import {
   Star,
   ChevronRight
 } from "lucide-react";
+import "./home-page-style.css";
 
 export default function HomePage() {
   const { user } = useAuth();
 
   const features = [
     {
-      icon: <Bot className="h-8 w-8 mb-4 text-primary" />,
-      title: "Custom Chatbots",
+      icon: <Bot className="feature-icon" />,
+      title: "Configurable Customer journey",
       description: "Create tailored chatbots that understand your business context and customer needs."
     },
     {
-      icon: <MessageSquare className="h-8 w-8 mb-4 text-primary" />,
+      icon: <MessageSquare className="feature-icon" />,
       title: "Natural Conversations",
       description: "Engage customers with human-like interactions powered by advanced AI technology."
     },
     {
-      icon: <Settings className="h-8 w-8 mb-4 text-primary" />,
-      title: "Easy Configuration",
+      icon: <Settings className="feature-icon" />,
+      title: "Visual drag and drop",
       description: "Set up and customize your chatbot with our intuitive drag-and-drop interface."
     },
     {
-      icon: <BarChart3 className="h-8 w-8 mb-4 text-primary" />,
+      icon: <BarChart3 className="feature-icon" />,
       title: "Analytics Dashboard",
       description: "Track performance metrics and gain insights into customer interactions."
     },
     {
-      icon: <Shield className="h-8 w-8 mb-4 text-primary" />,
+      icon: <Shield className="feature-icon" />,
       title: "Secure Integration",
       description: "Enterprise-grade security with encrypted data transmission and storage."
     },
     {
-      icon: <Code className="h-8 w-8 mb-4 text-primary" />,
-      title: "Simple API",
+      icon: <Code className="feature-icon" />,
+      title: "API for third party",
       description: "Seamlessly integrate your chatbot with existing systems using our REST API."
     }
   ];
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Customer Service Manager",
-      company: "TechCorp Solutions",
-      content: "Aksion has transformed our customer service. The chatbot handles routine inquiries efficiently, allowing our team to focus on complex issues.",
-      rating: 5
+  // Fetch reviews from the backend
+  const { data: reviews, isLoading: isLoadingReviews } = useQuery({
+    queryKey: ["/api/reviews"],
+    queryFn: async () => {
+      const response = await fetch("/api/reviews");
+      if (!response.ok) {
+        throw new Error("Failed to fetch reviews");
+      }
+      return response.json();
     },
-    {
-      name: "Michael Chen",
-      role: "E-commerce Director",
-      company: "Global Retail",
-      content: "The customization options are incredible. We've seen a 40% increase in customer satisfaction since implementing Aksion's chatbot.",
-      rating: 5
+    onError: (error) => {
+      console.error("Error fetching reviews:", error);
     },
-    {
-      name: "Emily Williams",
-      role: "Operations Lead",
-      company: "Swift Services",
-      content: "Easy to set up and maintain. The analytics provided help us continuously improve our customer interactions.",
-      rating: 4
-    }
-  ];
+  });
+
+  // Sort reviews by rating in descending order and pick the top 3
+  const topReviews = reviews
+    ? reviews.sort((a, b) => b.rating - a.rating).slice(0, 3)
+    : [];
+
 
   return (
-    <div className="min-h-screen">
+    <div className="homepage">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-gray-50 to-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+      <section className="hero-section">
+        <div className="hero-container">
+          <div className="hero-content">
+            <div className="hero-text">
+              <h1 className="hero-title">
                 Create Intelligent Chatbots for Your Business
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="hero-subtitle">
                 Enhance customer engagement with AI-powered chatbots tailored to your needs. No coding required.
               </p>
               {!user && (
                 <Link href="/auth">
-                  <Button size="lg" className="text-lg">
-                    Get Started <ChevronRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="cta-button">
+                    Get Started <ChevronRight className="cta-icon" />
                   </Button>
                 </Link>
               )}
             </div>
-            <div>
+            <div className="hero-image-container">
               <img
                 src="https://media.licdn.com/dms/image/D5612AQFKAJUuea57ww/article-cover_image-shrink_720_1280/0/1714627320235?e=2147483647&v=beta&t=ZjcvjDfrsm_MLC9r1VBym9R-PATJojWJ-IdNndPet1k"
                 alt="Chatbot Interface"
-                className="rounded-lg shadow-xl"
+                className="hero-image"
               />
             </div>
           </div>
@@ -105,22 +104,22 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+      <section id="features" className="features-section">
+        <div className="section-container">
+          <div className="section-header">
+            <h2 className="section-title">
               Powerful Features for Your Business
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="section-subtitle">
               Everything you need to create, manage, and optimize your chatbot experience
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="features-grid">
             {features.map((feature, index) => (
-              <div key={index} className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
+              <div key={index} className="feature-card">
                 {feature.icon}
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-description">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -128,54 +127,61 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              What Our Customers Say
-            </h2>
-            <p className="text-xl text-gray-600">
+      <section className="testimonials-section">
+        <div className="section-container">
+          <div className="section-header">
+            <h2 className="section-title">What Our Customers Say</h2>
+            <p className="section-subtitle">
               Trusted by businesses worldwide to deliver exceptional customer experiences
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
+          <div className="testimonials-grid">
+            {isLoadingReviews ? (
+              <p>Loading testimonials...</p>
+            ) : (
+              topReviews.map((review, index) => (
+                <div key={index} className="testimonial-card">
+                  <div className="testimonial-header">
+                    <img
+                      src={review.avatar || "/placeholder.jpg"} // Use avatar if available
+                      alt={review.userId.username}
+                      className="testimonial-avatar"
+                    />
+                    <div className="testimonial-meta">
+                      <p className="testimonial-name">{review.userId.username}</p>
+                    </div>
+                  </div>
+                  <div className="testimonial-rating">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <Star key={i} className="star-icon" />
+                    ))}
+                  </div>
+                  <p className="testimonial-content">{review.comment}</p>
                 </div>
-                <p className="text-gray-600 mb-4">{testimonial.content}</p>
-                <div>
-                  <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                  <p className="text-sm text-gray-500">{testimonial.role}</p>
-                  <p className="text-sm text-gray-500">{testimonial.company}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
 
       {/* Call to Action */}
-      <section className="bg-primary text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-6">
+      <section className="cta-section">
+        <div className="cta-container">
+          <h2 className="cta-title">
             Ready to Transform Your Customer Service?
           </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
+          <p className="cta-subtitle">
             Join thousands of businesses using Aksion to deliver exceptional customer experiences
           </p>
           {user ? (
             <Link href="/dashboard">
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" className="cta-button-secondary">
                 Go to Dashboard
               </Button>
             </Link>
           ) : (
             <Link href="/auth">
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" className="cta-button-secondary">
                 Start Free Trial
               </Button>
             </Link>

@@ -18,17 +18,31 @@ export const passwordSchema = z
 
 export const userSchema = z.object({
   _id: z.string(),
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters long" })
+    .regex(/^[a-zA-Z0-9_]+$/, { message: "Username can only contain letters, numbers, and underscores" }),
   email: z.string().email(),
+  phone_no: z
+    .string()
+    .regex(/^[0-9]{10}$/, { message: "Phone number must be a valid 10-digit number" }),
   password: z.string(),
   resetToken: z.string().optional(),
   resetTokenExpiry: z.date().optional(),
-  createdAt: z.date()
+  createdAt: z.date(),
 });
 
 export const registerUserSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters long" })
+    .regex(/^[a-zA-Z0-9_]+$/, { message: "Username can only contain letters, numbers, and underscores" }),
   email: z.string().email(),
+  phone_no: z
+    .string()
+    .regex(/^[0-9]{10}$/, { message: "Phone number must be a valid 10-digit number" }),
   password: passwordSchema,
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -60,8 +74,20 @@ export const documentSchema = z.object({
 
 export const stateSchema = z.object({
   name: z.string(),
+  utterances: z.array(z.string()),
+  responses: z.array(z.string()),
   specification: z.string(),
   order: z.number().optional()
+});
+
+// Payment schema
+export const paymentSchema = z.object({
+  paymentId: z.string().optional(),
+  orderId: z.string().optional(),
+  status: z.enum(['pending', 'completed', 'failed']).optional(),
+  date: z.date().optional(),
+  amount: z.number().optional(),
+  currency: z.string().optional(),
 });
 
 export const projectSchema = z.object({
@@ -78,9 +104,14 @@ export const projectSchema = z.object({
   documents: z.array(documentSchema).optional(),
   states: z.array(stateSchema),
   apiKey: z.string(),
+  plan_type: z.enum(['Basic', 'Pro', 'Ultimate']).default('Basic'), // New field
+  plan_expiry: z.date().nullable().optional(), // New field
+  total_api_calls: z.number().default(200), // New field
+  bot_link: z.string().nullable().optional(), // New field
   isActive: z.boolean().optional(),
   createdAt: z.date(),
-  lastUpdated: z.date().optional()
+  lastUpdated: z.date().optional(),
+  payment: paymentSchema.optional()
 });
 
 export const insertProjectSchema = projectSchema.omit({ 
@@ -90,8 +121,28 @@ export const insertProjectSchema = projectSchema.omit({
   documents: true,
   createdAt: true,
   lastUpdated: true,
-  isActive: true
+  isActive: true,
+  plan_expiry: true, // Omit plan_expiry for insertion
+  bot_link: true, // Omit bot_link for insertion
+  payment: true
 });
 
 export type Project = z.infer<typeof projectSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+export const reviewSchema = z.object({
+  _id: z.string(),
+  userId: z.string(),
+  projectId: z.string().optional(),
+  rating: z.number().min(1).max(5),
+  comment: z.string(),
+  createdAt: z.date(),
+});
+
+export const insertReviewSchema = reviewSchema.omit({
+  _id: true,
+  createdAt: true,
+});
+
+export type Review = z.infer<typeof reviewSchema>;
+export type InsertReview = z.infer<typeof insertReviewSchema>;

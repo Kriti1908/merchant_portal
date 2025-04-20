@@ -36,7 +36,7 @@ export function setupAuth(app: Express) {
   // MongoDB Connection with retries and support for local MongoDB
   const connectWithRetry = () => {
     // Try local MongoDB first, fallback to Atlas
-    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://serendipityisascam:iVDKefY10FjheTxL@cluster0.2rfj7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://dassteam13:zreL2IO0JnLAY56u@cluster0.tgkgnj4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
     return mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
@@ -92,8 +92,10 @@ app.use((req, res, next) => {
 
         const userObject = {
           _id: user._id.toString(),
+          username: user.username,
           email: user.email,
-          createdAt: user.createdAt
+          phone_no: user.phone_no,
+          createdAt: user.createdAt,
         };
         return done(null, userObject);
       } catch (err) {
@@ -113,8 +115,10 @@ app.use((req, res, next) => {
 
       const userObject = {
         _id: user._id.toString(),
+        username: user.username,
         email: user.email,
-        createdAt: user.createdAt
+        phone_no: user.phone_no,
+        createdAt: user.createdAt,
       };
       done(null, userObject);
     } catch (err) {
@@ -190,15 +194,22 @@ app.use((req, res, next) => {
       }
 
       const hashedPassword = await hashPassword(validatedData.password);
+      
+      // Create the user in the database
       const user = await User.create({
+        username: validatedData.username,
         email: validatedData.email,
-        password: hashedPassword
+        phone_no: validatedData.phone_no,
+        password: hashedPassword,
       });
 
+      // Prepare the user object for the session
       const userObject = {
         _id: user._id.toString(),
+        username: user.username,
         email: user.email,
-        createdAt: user.createdAt
+        phone_no: user.phone_no,
+        createdAt: user.createdAt,
       };
 
       req.login(userObject, (err) => {

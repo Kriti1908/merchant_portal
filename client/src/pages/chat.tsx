@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
-import { Bot } from "lucide-react";
+import { Bot, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import "./chat-style.css";
 
 type Message = {
   role: "user" | "assistant";
@@ -18,39 +19,17 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  
-  // Get bot details from URL params
+
   const params = new URLSearchParams(window.location.search);
-  const botName = params.get("name") || "Bot";
+  const botName = params.get("name") || "Aksion Assistant";
   const apiKey = params.get("key") || "";
+  const sessionId = useRef(`new-session-${Math.floor(Math.random() * 10000)}`);
 
   useEffect(() => {
-    // Load chat history
-    fetchChatHistory();
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const fetchChatHistory = async () => {
-    try {
-      const response = await fetch(`/api/chat/history?apiKey=${apiKey}`);
-      if (!response.ok) throw new Error("Failed to load chat history");
-      const history = await response.json();
-      setMessages(history);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load chat history",
-        variant: "destructive",
-      });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -61,30 +40,37 @@ export default function Chat() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: input,
-          apiKey,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/chat/Omo_Bike_Info.csv?sessionId=${sessionId.current}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: input,
+            apiKey,
+          }),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to send message");
-      
-      const botResponse = await response.json();
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: botResponse.message,
-        timestamp: new Date(),
-      }]);
+
+      const botResponse = await response.text(); // Rich Text (Markdown format)
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: botResponse,
+          timestamp: new Date(),
+        },
+      ]);
     } catch (error) {
       toast({
         title: "Error",
@@ -96,54 +82,93 @@ export default function Chat() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 h-screen flex flex-col">
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            {botName}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
-              >
-                <p>{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
-                  {new Date(message.timestamp).toLocaleTimeString()}
-                </p>
+    <div className="chat-container">
+      <div className="chat-wrapper">
+        <Card className="chat-card">
+          <CardHeader className="chat-header">
+            <CardTitle className="chat-title">
+              <Bot className="chat-bot-icon" />
+              <span>{botName}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="chat-content">
+            {messages.length === 0 ? (
+              <div className="empty-chat">
+                <div className="empty-chat-icon">
+                  <Bot size={48} />
+                </div>
+                <h3>How can I help you today?</h3>
+                <p>Ask me anything about our products and services!</p>
               </div>
+            ) : (
+              <div className="messages-container">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`message-wrapper ${
+                      message.role === "user"
+                        ? "user-message-wrapper"
+                        : "assistant-message-wrapper"
+                    }`}
+                  >
+                    <div className={`message ${message.role}-message`}>
+                      {message.role === "assistant" ? (
+                        <ReactMarkdown
+                          components={{
+                            p: ({ node, ...props }) => (
+                              <p className="markdown-content" {...props} />
+                            ),
+                            // add more tags here if needed (e.g., h1, ul, code, etc.)
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p>{message.content}</p>
+                      )}
+                      <span className="message-timestamp">
+                        {new Date(message.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </CardContent>
+          <div className="chat-input-container">
+            <div className="input-wrapper">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                disabled={isLoading}
+                className="chat-input"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={isLoading}
+                className="send-button"
+                aria-label="Send message"
+              >
+                {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
+              </Button>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </CardContent>
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Type your message..."
-              disabled={isLoading}
-            />
-            <Button onClick={handleSend} disabled={isLoading}>
-              Send
-            </Button>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

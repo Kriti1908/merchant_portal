@@ -1,0 +1,241 @@
+/* Styling for Generate API Page - aligned with HomePage aesthetic */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.generate-api-wrapper{
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+  backdrop-filter: blur(20px); /* Apply blur effect */
+  -webkit-backdrop-filter: blur(20px); /* For Safari */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.generate-api-page {
+  font-family: 'Inter', sans-serif;
+  /* background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+  backdrop-filter: blur(20px); Apply blur effect */
+  /* padding: 4rem 1rem; */
+  color: var(--text-dark);
+  min-height: fit-content;
+  max-width: 60%;
+  margin: 0 auto;
+}
+
+.api-card {
+  border-radius: var(--border-radius-xl);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+}
+
+.api-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.api-card .card-header h2,
+.api-card .card-header p,
+.api-card label {
+  color: var(--text-dark);
+}
+
+.api-card .card-header {
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* Improved form field alignment and styling */
+.api-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Label styling */
+.api-form label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+/* Input field styling */
+.api-form input,
+.api-form select,
+.api-form textarea {
+  display: block;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.95rem;
+  background-color: white;
+  color: #1f2937;
+  transition: border-color 0.15s ease;
+}
+
+.api-form input:focus,
+.api-form select:focus,
+.api-form textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Form field container */
+.form-item {
+  margin-bottom: 0rem;
+}
+
+/* Improve the two-column layout in some sections */
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row > * {
+  flex: 1;
+}
+
+/* Style for the form sections */
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* Better spacing for the bot state cards */
+.bot-state-card {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Adjust the drag handle and state number positioning */
+.state-number-badge {
+  margin-top: 0.5rem;
+}
+
+.api-form button[type="submit"] {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.api-form button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.bot-state-card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  transition: var(--transition);
+}
+
+.bot-state-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.state-number-badge {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.drag-handle {
+  background-color: var(--gray-100);
+  padding: 0.5rem;
+  border-radius: var(--border-radius-md);
+  cursor: grab;
+  transition: var(--transition);
+}
+
+.drag-handle:hover {
+  background-color: var(--primary-light);
+}
+
+.upload-section a {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.upload-section a:hover {
+  color: var(--accent-color);
+}
+
+.empty-state {
+  background-color: var(--gray-100);
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--border-radius-md);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-light);
+  transition: var(--transition);
+}
+
+.empty-state:hover {
+  background-color: var(--gray-200);
+  color: var(--text-dark);
+}
+
+/* Always visible underline with smooth hover effect */
+.text-primary {
+  position: relative;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 0.875rem; /* Smaller font size */
+  transition: color 0.3s ease;
+  margin-bottom: 0.5rem; /* Add spacing between items */
+  text-align: center;
+  
+}
+
+.text-primary::after {
+  content: "";
+  position: absolute;
+  bottom: -1px; /* Keep underline close to the text */
+  left: 50%; /* Start underline from the center */
+  width: 100%; /* Initially no underline */
+  height: 1.5px; /* Smaller underline */
+  background: var(--gray-200); /* Default grey underline */
+  transition: width 0.3s ease, background 0.3s ease; /* Smooth transition for width and color */
+  transform: translateX(-50%);
+}
+
+.text-primary:hover {
+  color: var(--primary-dark); /* Optional: Change text color on hover */
+}
+
+.text-primary:hover::after {
+  width: 100%; /* Expand underline smoothly */
+  background: linear-gradient(90deg, #6366f1, #ec4899); /* Blue-to-pink gradient */
+}

@@ -1,7 +1,16 @@
 import mongoose from 'mongoose';
-import { z } from 'zod';
+import { number, z } from 'zod';
 
 const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: {
+      validator: (v) => /^[a-zA-Z0-9_]+$/.test(v),
+      message: (props) => `${props.value} is not a valid username!`
+    }
+  },
   email: {
     type: String,
     required: true,
@@ -10,6 +19,14 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  phone_no: {
+    type: String, // Changed from number to String
+    required: true,
+    validate: {
+      validator: (v) => /^[0-9]{10}$/.test(v), // Ensures it's a valid 10-digit number
+      message: (props) => `${props.value} is not a valid phone number!`
+    }
   },
   resetToken: {
     type: String,

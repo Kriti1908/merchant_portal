@@ -1,0 +1,190 @@
+.confirm-payment-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2)); /* Add gradient */
+  backdrop-filter: blur(20px); /* Add blur effect */
+  -webkit-backdrop-filter: blur(20px); /* For Safari */
+}
+  
+  .confirm-payment-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  .confirm-payment-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #111827;
+  }
+  
+  .order-summary {
+    margin-bottom: 2rem;
+  }
+  
+  .summary-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: #374151;
+  }
+  
+  .plan-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .plan-name {
+    font-weight: 600;
+    font-size: 2.15rem;
+    display: block;
+    color: #111827;
+  }
+  
+  .plan-billing {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+  
+  .plan-price {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #111827;
+  }
+  
+  .price-cycle {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  
+  .plan-features {
+    margin-bottom: 1.5rem;
+  }
+  
+  .plan-features h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+  }
+  
+  .plan-features ul {
+    list-style: none;
+    padding-left: 0.25rem;
+  }
+  
+  .plan-features li {
+    padding: 0.35rem 0;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+  }
+  
+  .plan-features li::before {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  
+  .total-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    font-weight: 600;
+  }
+  
+  .total-label {
+    font-size: 1.15rem;
+    color: #111827;
+  }
+  
+  .total-amount {
+    font-size: 1.5rem;
+    color: #111827;
+  }
+  
+  .payment-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+  }
+  
+  .back-button {
+    flex: 1;
+    margin-right: 0.5rem;
+  }
+  
+  .proceed-button {
+    flex: 2;
+    margin-left: 0.5rem;
+    background-color: #3b82f6;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+  }
+  
+  .payment-processing, .payment-success, .payment-failed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .failed-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .generating-message, .redirect-message {
+    margin: 0.5rem 0;
+    color: #6b7280;
+  }
+  
+  .retry-button {
+    margin-top: 1rem;
+    background-color: #3b82f6;
+  }
